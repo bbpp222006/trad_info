@@ -9,7 +9,7 @@ from fastapi_cache.backends.inmemory import InMemoryBackend
 from fastapi_cache.decorator import cache
 import uvicorn
 import numpy as np
-
+from sklearn.linear_model import LinearRegression
 
 app = FastAPI()
 
@@ -71,5 +71,50 @@ def canary_strategy():
         "intermediate_results": results,
         "end_time": end_time.isoformat()
     }
+
+@app.get("/B_A_rebalance")
+@cache(expire=3600)  # Cache for 1 hour
+def B_A_rebalance():
+    end_time = datetime.now()
+    start_time = end_time - timedelta(days=30 * 2)
+
+    target_tickers = ["CLSK", "IREN", "WULF", "BTBT","COIN","CORZ","BITF","QQQ"]
+    base_tickers = ["IBIT", "MAGS"]
+    tickers = target_tickers + base_tickers
+    data = yf.download(tickers, start=start_time, end=end_time, interval='1mo')['Adj Close']
+
+    # 计算每日收益率
+    returns = data.pct_change().dropna()
+
+    # 创建一个空的数据框来存储回归结果
+    results_df = pd.DataFrame(columns=['Target', 'Intercept'] + base_tickers + ['R_squared', 'Noise Mean', 'Noise Std',"sum_p","mags_pct"])
+
+    # 对每个 target_tickers 进行多元回归计算
+    for target in target_tickers:
+        X = returns[base_tickers]
+        y = returns[target]
+
+        # 创建并拟合回归模型
+        model = LinearRegression().fit(X, y)
+
+        # 获取回归系数和截距
+        weights = model.coef_
+        intercept = model.intercept_
+        r_squared = model.score(X, y)
+
+        # 计算回归残差（噪声）
+        predicted_y = model.predict(X)
+        noise = y - predicted_y
+
+        # 将结果添加到数据框中
+        [base_1,base_2] = list(weights)
+        results = [target, intercept] + [base_1,base_2] + [r_squared, noise.mean(), noise.std(),sum([base_1,base_2])*r_squared,base_1-base_2]
+        results_df.loc[len(results_df)] = results
+
+    # 将结果数据框转换为字典并返回 JSON
+    results_dict = results_df.to_dict(orient='records')
+    return {"results": results_dict}
+
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

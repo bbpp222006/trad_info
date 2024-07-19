@@ -4,3 +4,4 @@ requests
 fastapi-cache2
 pandas
 yfinance
+scikit-learn
