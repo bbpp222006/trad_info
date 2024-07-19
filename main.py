@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Dict, Any
+import requests
 import yfinance as yf
 from datetime import datetime, timedelta
 import pandas as pd
@@ -36,7 +37,7 @@ def canary_strategy():
     start_time = end_time - timedelta(days=365 * 2)  # 2 years of data
 
     tickers = ['TIP', 'SPY', 'IWM', 'EFA', 'EEM', 'VNQ', 'PDBC', 'IEF', 'TLT', 'BIL']
-    data = yf.download(tickers, start=start_time, end=end_time, interval='1mo')#,proxy="http://192.168.123.200:20171"
+    data = yf.download(tickers, start=start_time, end=end_time, interval='1mo')
 
     results = {}
     for ticker in tickers:
@@ -81,7 +82,7 @@ def B_A_rebalance():
     target_tickers = ["CLSK", "IREN", "WULF", "BTBT","COIN","CORZ","BITF","QQQ"]
     base_tickers = ["IBIT", "MAGS"]
     tickers = target_tickers + base_tickers
-    data = yf.download(tickers, start=start_time, end=end_time, interval='1mo')['Adj Close']
+    data = yf.download(tickers, start=start_time, end=end_time)['Adj Close'] #, session=session
 
     # 计算每日收益率
     returns = data.pct_change().dropna()
@@ -113,8 +114,19 @@ def B_A_rebalance():
 
     # 将结果数据框转换为字典并返回 JSON
     results_dict = results_df.to_dict(orient='records')
+    
     return {"results": results_dict}
 
 
 if __name__ == "__main__":
+
+    # 定义代理服务器
+    proxies = {
+        'http': 'http://192.168.123.200:20171',
+        'https': 'http://192.168.123.200:20171'
+    }
+
+    # 配置 requests 使用代理
+    session = requests.Session()
+    session.proxies.update(proxies)
     uvicorn.run(app, host="0.0.0.0", port=8000)
