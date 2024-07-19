@@ -35,10 +35,7 @@ async def startup():
 def canary_strategy():
     end_time = datetime.now()
     start_time = end_time - timedelta(days=365 * 2)  # 2 years of data
-
-    tickers = ['TIP', 'SPY', 'IWM', 'EFA', 'EEM', 'VNQ', 'PDBC', 'IEF', 'TLT', 'BIL']
     data = yf.download(tickers, start=start_time, end=end_time, interval='1mo')
-
     results = {}
     for ticker in tickers:
         df = data['Adj Close'][ticker].dropna()
@@ -52,8 +49,7 @@ def canary_strategy():
 
     decision = {}
     if tip_momentum > 0:
-        offensive_assets = ['SPY', 'IWM', 'EFA', 'EEM', 'VNQ', 'PDBC', 'IEF', 'TLT']
-        positive_momentums = {asset: results[asset]['weighted_average'] for asset in offensive_assets if results[asset]['weighted_average'] > 0}
+        positive_momentums = {asset: results[asset]['weighted_average'] for asset in offensive_tickers if results[asset]['weighted_average'] > 0}
         sorted_assets = sorted(positive_momentums, key=positive_momentums.get, reverse=True)[:4]
 
         if len(sorted_assets) < 4:
@@ -119,6 +115,10 @@ def B_A_rebalance():
 
 
 if __name__ == "__main__":
+
+    offensive_tickers = ['IWM', 'EFA', 'EEM', 'VNQ', 'PDBC', 'IEF', 'TLT', 'BIL','QQQ',"BTC-USD"]
+    base_tickers = ['TIP']
+    tickers = base_tickers+offensive_tickers
 
     # 定义代理服务器
     proxies = {
