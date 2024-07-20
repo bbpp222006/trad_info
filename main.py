@@ -105,7 +105,7 @@ def B_A_rebalance():
 
         # 将结果添加到数据框中
         [base_1,base_2] = list(weights)
-        results = [target, intercept] + [base_1,base_2] + [r_squared, noise.mean(), noise.std(),sum([base_1,base_2])*r_squared,base_1-base_2]
+        results = [target, intercept] + [base_1,base_2] + [r_squared, noise.mean(), noise.std(),sum([base_1,base_2])*r_squared,(base_1-base_2)/(1+base_1-base_2)]
         results_df.loc[len(results_df)] = results
 
     # 将结果数据框转换为字典并返回 JSON
