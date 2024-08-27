@@ -75,8 +75,8 @@ def B_A_rebalance():
     end_time = datetime.now()
     start_time = end_time - timedelta(days=30 * 2)
 
-    target_tickers = ["CLSK", "IREN", "WULF", "BTBT","COIN","CORZ","BITF","QQQ"]
-    base_tickers = ["IBIT", "MAGS"]
+    target_tickers = ["CLSK", "IREN", "WULF", "BTBT","COIN","CORZ","BITF","QQQ","MSTR","MSTX","SOXL"]
+    base_tickers = ["IBIT", "SOXQ"]
     tickers = target_tickers + base_tickers
     data = yf.download(tickers, start=start_time, end=end_time)['Adj Close'] #, session=session
 
